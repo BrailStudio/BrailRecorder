@@ -97,7 +97,7 @@ windows-core = "0.58"
 # FFmpeg bindings for muxing + software fallback encode + hardware encoder
 # access via FFmpeg's hwaccel wrappers (nvenc/amf/qsv), rather than hand
 # rolling three separate vendor SDK integrations.
-ffmpeg-next = "7.1"
+ffmpeg-next = { version = "7.1", features = ["build"] }
 
 # RTMP/FLV publish client for YouTube / Twitch / custom RTMP ingest
 rml_rtmp = "0.8"
