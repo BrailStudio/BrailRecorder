@@ -22,8 +22,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -46,7 +44,7 @@ jobs:
       - name: Build Tauri Windows Installer
         uses: tauri-apps/tauri-action@v0
         with:
-          projectPath: .
+          projectPath: ./src-tauri
           args: --bundles nsis
 
       - name: Upload Windows Installer
