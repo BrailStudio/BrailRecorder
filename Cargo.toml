@@ -1,0 +1,119 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/brail-core",
+    "crates/brail-hardware",
+    "crates/brail-capture",
+    "crates/brail-encoder",
+    "crates/brail-audio",
+    "crates/brail-streaming",
+    "crates/brail-replay",
+    "crates/brail-performance",
+    "crates/brail-storage",
+    "crates/brail-security",
+    "crates/brail-hotkeys",
+    "crates/brail-recovery",
+    "src-tauri",
+    "tests",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Brail Recorder"]
+license = "MIT"
+rust-version = "1.77"
+
+[workspace.dependencies]
+# Shared internal crates
+brail-core = { path = "crates/brail-core" }
+brail-hardware = { path = "crates/brail-hardware" }
+brail-capture = { path = "crates/brail-capture" }
+brail-encoder = { path = "crates/brail-encoder" }
+brail-audio = { path = "crates/brail-audio" }
+brail-streaming = { path = "crates/brail-streaming" }
+brail-replay = { path = "crates/brail-replay" }
+brail-performance = { path = "crates/brail-performance" }
+brail-storage = { path = "crates/brail-storage" }
+brail-security = { path = "crates/brail-security" }
+brail-hotkeys = { path = "crates/brail-hotkeys" }
+brail-recovery = { path = "crates/brail-recovery" }
+
+# Async runtime — the entire pipeline (capture -> encode -> mux/network) is
+# built on bounded mpsc channels running on dedicated tokio tasks/threads so
+# the UI (webview) process is never on the hot path.
+tokio = { version = "1.40", features = ["rt-multi-thread", "sync", "time", "macros", "fs", "net", "io-util"] }
+
+# Serialization for config, IPC payloads, capability profiles
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging — cheap, structured, no polling
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Windows API bindings (real Win32/WinRT surface, not a mock layer)
+windows = { version = "0.58", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Graphics_Gdi",
+    "Win32_Media_Audio",
+    "Win32_Media_MediaFoundation",
+    "Win32_System_Com",
+    "Win32_System_Threading",
+    "Win32_System_Performance",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Power",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_HiDpi",
+    "Win32_Security_Cryptography",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Registry",
+    "Win32_System_SystemInformation",
+    "Win32_Media_KernelStreaming",
+    "Win32_Devices_Properties",
+    "Win32_System_WinRT",
+    "Win32_System_WinRT_Graphics_Capture",
+    "Win32_System_WinRT_Direct3D11",
+    "Win32_Graphics_Direct3D11on12",
+    "Win32_UI_Shell_PropertiesSystem",
+    "Win32_Devices_FunctionDiscovery",
+    "Graphics_Capture",
+    "Graphics_DirectX",
+    "Graphics_DirectX_Direct3D11",
+    "Foundation",
+    "Foundation_Collections",
+] }
+windows-core = "0.58"
+
+# FFmpeg bindings for muxing + software fallback encode + hardware encoder
+# access via FFmpeg's hwaccel wrappers (nvenc/amf/qsv), rather than hand
+# rolling three separate vendor SDK integrations.
+ffmpeg-next = "7.1"
+
+# RTMP/FLV publish client for YouTube / Twitch / custom RTMP ingest
+rml_rtmp = "0.8"
+
+# SRT support for custom streaming profiles
+srt-tokio = "0.4"
+
+bytes = "1.7"
+parking_lot = "0.12"
+crossbeam-channel = "0.5"
+uuid = { version = "1.10", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -1,0 +1,43 @@
+[package]
+name = "brail-tests"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+# This package contains only integration tests; there's no library or
+# binary to build, so autobins/autolib are off and each test file under
+# tests/ is compiled as its own test target.
+autobins = false
+autoexamples = false
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+brail-core.workspace = true
+brail-hardware.workspace = true
+brail-capture.workspace = true
+brail-encoder.workspace = true
+brail-audio.workspace = true
+brail-streaming.workspace = true
+brail-replay.workspace = true
+brail-performance.workspace = true
+brail-security.workspace = true
+brail-storage.workspace = true
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
+bytes.workspace = true
+uuid.workspace = true
+serde_json.workspace = true
+windows.workspace = true
+
+[[test]]
+name = "presets_and_capability"
+path = "presets_and_capability.rs"
+
+[[test]]
+name = "pipeline_behavior"
+path = "pipeline_behavior.rs"
+
+[[test]]
+name = "windows_integration"
+path = "windows_integration.rs"

@@ -1,0 +1,11 @@
+[package]
+name = "brail-hotkeys"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+brail-core.workspace = true
+windows.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+anyhow.workspace = true

@@ -1,0 +1,21 @@
+[package]
+name = "brail-hardware"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+brail-core.workspace = true
+windows.workspace = true
+windows-core.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+# ffmpeg-next is used here only to attempt opening each hardware encoder
+# codec (h264_nvenc / h264_amf / h264_qsv) for real during the capability
+# probe, so `verified` in EncoderCapability reflects a genuine open/close
+# round-trip rather than a GPU-model guess.
+ffmpeg-next.workspace = true
