@@ -3,7 +3,7 @@ use thiserror::Error;
 /// Top-level error type surfaced to the UI layer. Every subsystem maps its
 /// own error enum into one of these variants so the frontend has a single,
 /// stable shape to render — never a raw Win32 HRESULT or FFmpeg errno.
-#[derive(Debug, Error, Clone, serde::Serialize)]
+#[derive(Debug, Error, Clone, serde::Serialize, serde::Deserialize)]
 pub enum BrailError {
     #[error("no capturable source found (monitor/window may have disconnected)")]
     CaptureSourceLost,
