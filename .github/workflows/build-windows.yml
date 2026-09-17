@@ -49,6 +49,7 @@ jobs:
           C:\msys64\usr\bin\bash.exe -lc "pacman -S --noconfirm make diffutils"
           
       - name: Build Tauri Windows Installer
+        working-directory: ./ui
         shell: pwsh
         env:
           PATH: "C:\\msys64\\usr\\bin;C:\\msys64\\mingw64\\bin;${{ env.PATH }}"
