@@ -18,9 +18,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Install Node.js for the UI build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Install Rust automatically
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      # Cache Rust build dependencies
       - name: Cache Rust
         uses: swatinem/rust-cache@v2
         with:
@@ -28,12 +37,18 @@ jobs:
             . -> target
             src-tauri -> target
 
+      # Install JavaScript/TypeScript dependencies
+      - name: Install frontend dependencies
+        run: npm install
+
+      # Build the Tauri application and Windows installer
       - name: Build Tauri Windows Installer
         uses: tauri-apps/tauri-action@v0
         with:
           projectPath: .
           args: --bundles nsis
 
+      # Upload the generated installer
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
