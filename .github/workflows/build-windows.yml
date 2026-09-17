@@ -40,12 +40,19 @@ jobs:
       - name: Build frontend
         working-directory: ./ui
         run: npm run build
-
+        
+      - name: Install FFmpeg build tools
+        shell: pwsh
+        run: |
+          choco install msys2 -y --no-progress
+          C:\msys64\usr\bin\bash.exe -lc "pacman -Syu --noconfirm"
+          C:\msys64\usr\bin\bash.exe -lc "pacman -S --noconfirm make diffutils"
+          
       - name: Build Tauri Windows Installer
-        uses: tauri-apps/tauri-action@v0
-        with:
-          projectPath: ./src-tauri
-          args: --bundles nsis
+        shell: pwsh
+        env:
+          PATH: "C:\\msys64\\usr\\bin;C:\\msys64\\mingw64\\bin;${{ env.PATH }}"
+        run: npm run tauri build -- --bundles nsis
 
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
