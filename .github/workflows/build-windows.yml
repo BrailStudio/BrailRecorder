@@ -61,7 +61,10 @@ jobs:
       - name: Install vcpkg and FFmpeg dev libs
         shell: pwsh
         run: |
-          ...
+          git clone https://github.com/microsoft/vcpkg
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg install ffmpeg[nvcodec,amf,qsv]:x64-windows
+          echo "FFMPEG_DIR=$(Resolve-Path .\vcpkg\installed\x64-windows)" >> $env:GITHUB_ENV
             
       - name: Install LLVM
         run: choco install llvm -y --no-progress
