@@ -47,6 +47,18 @@ jobs:
           choco install msys2 -y --no-progress
           C:\msys64\usr\bin\bash.exe -lc "pacman -Syu --noconfirm"
           C:\msys64\usr\bin\bash.exe -lc "pacman -S --noconfirm make diffutils"
+            
+      - name: Install LLVM
+        run: choco install llvm -y --no-progress
+
+      - name: Install vcpkg and FFmpeg dev libs
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg install ffmpeg[nvcodec,amf,qsv]:x64-windows
+          echo "FFMPEG_DIR=$(Resolve-Path .\vcpkg\installed\x64-windows)" >> $env:GITHUB_ENV
+          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
           
       - name: Build Tauri Windows Installer
         working-directory: ./ui
