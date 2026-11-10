@@ -1,0 +1,105 @@
+
+name: Build Windows installers
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-windows:
+    name: Build Brail Recorder (EXE + MSI)
+    runs-on: windows-2022
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install frontend dependencies
+        shell: pwsh
+        run: |
+          npm install --prefix ui --no-audit --no-fund
+          npm run build --prefix ui
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-x86_64-pc-windows-msvc
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Install LLVM
+        shell: pwsh
+        run: |
+          choco install llvm --yes --no-progress
+          "LIBCLANG_PATH=C:\Program Files\LLVM\bin" |
+            Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Install FFmpeg development libraries
+        shell: pwsh
+        run: |
+          $root = "$env:RUNNER_TEMP\vcpkg"
+          git clone https://github.com/microsoft/vcpkg.git $root
+
+          & "$root\bootstrap-vcpkg.bat" -disableMetrics
+          if ($LASTEXITCODE -ne 0) { throw "vcpkg bootstrap failed" }
+
+          & "$root\vcpkg.exe" install "ffmpeg[nvcodec,amf,qsv]:x64-windows"
+          if ($LASTEXITCODE -ne 0) { throw "FFmpeg installation failed" }
+
+          "VCPKG_ROOT=$root" |
+            Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          "FFMPEG_DIR=$root\installed\x64-windows" |
+            Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2.0" --locked
+
+      - name: Generate application icons
+        shell: pwsh
+        run: |
+          cargo tauri icon src-tauri/icons/icon.svg --output src-tauri/icons
+          if ($LASTEXITCODE -ne 0) { throw "Icon generation failed" }
+
+          Copy-Item src-tauri/icons/32x32.png src-tauri/icons/tray.png -Force
+
+      - name: Build EXE and MSI
+        shell: pwsh
+        run: |
+          cargo tauri build --bundles nsis,msi
+          if ($LASTEXITCODE -ne 0) { throw "Windows build failed" }
+
+      - name: Upload installer artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Brail-Recorder-Windows-x64
+          if-no-files-found: error
+          path: |
+            target/release/bundle/nsis/*.exe
+            target/release/bundle/msi/*.msi
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/release/bundle/nsis/*.exe
+            target/release/bundle/msi/*.msi
+          generate_release_notes: true
