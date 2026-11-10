@@ -1,0 +1,37 @@
+[package]
+name = "brail-recorder"
+version.workspace = true
+edition.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+brail-core.workspace = true
+brail-hardware.workspace = true
+brail-capture.workspace = true
+brail-encoder.workspace = true
+brail-audio.workspace = true
+brail-streaming.workspace = true
+brail-replay.workspace = true
+brail-performance.workspace = true
+brail-storage.workspace = true
+brail-security.workspace = true
+brail-hotkeys.workspace = true
+brail-recovery.workspace = true
+
+tauri = { version = "2.0", features = ["tray-icon"] }
+tauri-plugin-shell = "2.0"
+tauri-plugin-dialog = "2.0"
+tauri-plugin-notification = "2.0"
+
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+uuid.workspace = true
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

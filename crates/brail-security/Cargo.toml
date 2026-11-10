@@ -1,0 +1,11 @@
+[package]
+name = "brail-security"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+brail-core.workspace = true
+windows.workspace = true
+tracing.workspace = true
+anyhow.workspace = true
+uuid.workspace = true

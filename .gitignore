@@ -1,0 +1,14 @@
+/target/
+/src-tauri/target/
+Cargo.lock
+
+/ui/node_modules/
+/ui/dist/
+
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Recovery/config artifacts if the app is ever run from a dev checkout
+/BrailRecorder/

@@ -1,0 +1,12 @@
+[package]
+name = "brail-replay"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+brail-core.workspace = true
+brail-encoder.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+anyhow.workspace = true
+chrono.workspace = true

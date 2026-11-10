@@ -1,0 +1,16 @@
+[package]
+name = "brail-encoder"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+brail-core.workspace = true
+brail-capture.workspace = true
+brail-hardware.workspace = true
+windows.workspace = true
+ffmpeg-next.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+bytes.workspace = true
