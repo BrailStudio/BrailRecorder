@@ -33,7 +33,14 @@ jobs:
         shell: pwsh
         run: |
           npm install --prefix ui --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) {
+            throw "Frontend dependency installation failed"
+          }
+
           npm run build --prefix ui
+          if ($LASTEXITCODE -ne 0) {
+            throw "Frontend build failed"
+          }
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -49,24 +56,87 @@ jobs:
         shell: pwsh
         run: |
           choco install llvm --yes --no-progress
+          if ($LASTEXITCODE -ne 0) {
+            throw "LLVM installation failed"
+          }
+
           "LIBCLANG_PATH=C:\Program Files\LLVM\bin" |
             Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
-      - name: Install FFmpeg development libraries
+      - name: Install pinned FFmpeg 7.1.2
         shell: pwsh
         run: |
           $root = "$env:RUNNER_TEMP\vcpkg"
+          $overlayRoot = "$env:RUNNER_TEMP\vcpkg-overlay"
+          $ffmpegOverlay = Join-Path $overlayRoot "ffmpeg"
+
+          # Download vcpkg
           git clone https://github.com/microsoft/vcpkg.git $root
+          if ($LASTEXITCODE -ne 0) {
+            throw "vcpkg clone failed"
+          }
 
           & "$root\bootstrap-vcpkg.bat" -disableMetrics
-          if ($LASTEXITCODE -ne 0) { throw "vcpkg bootstrap failed" }
+          if ($LASTEXITCODE -ne 0) {
+            throw "vcpkg bootstrap failed"
+          }
 
-          & "$root\vcpkg.exe" install "ffmpeg[nvcodec,amf,qsv]:x64-windows"
-          if ($LASTEXITCODE -ne 0) { throw "FFmpeg installation failed" }
+          # Exact vcpkg port tree for FFmpeg 7.1.2#5
+          $ffmpegPortTree = "bf414f1e4f2a63ff7410444dc4eabb5b392f6d16"
+
+          git -C $root cat-file -e "$ffmpegPortTree^{tree}"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Pinned FFmpeg port was not found in vcpkg"
+          }
+
+          New-Item -ItemType Directory -Force -Path $ffmpegOverlay |
+            Out-Null
+
+          $archive = "$env:RUNNER_TEMP\ffmpeg-port.tar"
+
+          git -C $root archive `
+            --format=tar `
+            $ffmpegPortTree `
+            --output="$archive"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not extract pinned FFmpeg port"
+          }
+
+          tar -xf $archive -C $ffmpegOverlay
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not unpack FFmpeg port"
+          }
+
+          # Install FFmpeg using the pinned overlay port
+          & "$root\vcpkg.exe" install `
+            "ffmpeg[nvcodec,amf,qsv]:x64-windows" `
+            "--overlay-ports=$overlayRoot"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "FFmpeg installation failed"
+          }
+
+          $ffmpegDir = "$root\installed\x64-windows"
+
+          # Verify the header that caused the previous failure
+          $requiredHeader = Join-Path `
+            $ffmpegDir "include\libavcodec\avfft.h"
+
+          if (!(Test-Path $requiredHeader)) {
+            throw "FFmpeg avfft.h is missing from the installation"
+          }
 
           "VCPKG_ROOT=$root" |
             Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          "FFMPEG_DIR=$root\installed\x64-windows" |
+
+          "VCPKG_DEFAULT_TRIPLET=x64-windows" |
+            Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+          "FFMPEG_DIR=$ffmpegDir" |
+            Out-File $env:GITHUB_ENV -Append -Encoding utf8
+
+          "PKG_CONFIG_PATH=$ffmpegDir\lib\pkgconfig" |
             Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Install Tauri CLI
@@ -76,15 +146,27 @@ jobs:
         shell: pwsh
         run: |
           cargo tauri icon src-tauri/icons/icon.svg --output src-tauri/icons
-          if ($LASTEXITCODE -ne 0) { throw "Icon generation failed" }
+          if ($LASTEXITCODE -ne 0) {
+            throw "Icon generation failed"
+          }
 
           Copy-Item src-tauri/icons/32x32.png src-tauri/icons/tray.png -Force
+
+      - name: Verify Rust dependency versions
+        shell: pwsh
+        run: |
+          cargo tree -i ffmpeg-sys-next
+          if ($LASTEXITCODE -ne 0) {
+            throw "FFmpeg Rust dependency verification failed"
+          }
 
       - name: Build EXE and MSI
         shell: pwsh
         run: |
           cargo tauri build --bundles nsis,msi
-          if ($LASTEXITCODE -ne 0) { throw "Windows build failed" }
+          if ($LASTEXITCODE -ne 0) {
+            throw "Windows installer build failed"
+          }
 
       - name: Upload installer artifacts
         uses: actions/upload-artifact@v4
