@@ -174,6 +174,11 @@ record time.
 | [DEVELOPMENT.md](docs/DEVELOPMENT.md) | Conventions and how to contribute |
 | [BUILD.md](docs/BUILD.md) | Prerequisites and troubleshooting |
 
+## Credits
+
+BrailStudio (Amin)
+JernStudio
+
 ## License
 
 Not yet decided — add one before distributing.
