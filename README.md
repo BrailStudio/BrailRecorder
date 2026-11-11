@@ -176,7 +176,7 @@ record time.
 
 ## Credits
 
-BrailStudio (Amin)
+BrailStudio (Amin) , 
 JernStudio
 
 ## License
