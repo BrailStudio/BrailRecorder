@@ -42,10 +42,18 @@ jobs:
             throw "Frontend build failed"
           }
 
-      - name: Set up Rust
+      - name: Set up Rust and Cargo
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable-x86_64-pc-windows-msvc
+
+      - name: Generate Cargo.lock
+        shell: pwsh
+        run: |
+          cargo generate-lockfile
+          if ($LASTEXITCODE -ne 0) {
+            throw "Cargo lockfile generation failed"
+          }
 
       - name: Set up MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -63,14 +71,11 @@ jobs:
           "LIBCLANG_PATH=C:\Program Files\LLVM\bin" |
             Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
-      - name: Install pinned FFmpeg 7.1.2
+      - name: Install FFmpeg 9
         shell: pwsh
         run: |
           $root = "$env:RUNNER_TEMP\vcpkg"
-          $overlayRoot = "$env:RUNNER_TEMP\vcpkg-overlay"
-          $ffmpegOverlay = Join-Path $overlayRoot "ffmpeg"
 
-          # Download vcpkg
           git clone https://github.com/microsoft/vcpkg.git $root
           if ($LASTEXITCODE -ne 0) {
             throw "vcpkg clone failed"
@@ -81,51 +86,12 @@ jobs:
             throw "vcpkg bootstrap failed"
           }
 
-          # Exact vcpkg port tree for FFmpeg 7.1.2#5
-          $ffmpegPortTree = "bf414f1e4f2a63ff7410444dc4eabb5b392f6d16"
-
-          git -C $root cat-file -e "$ffmpegPortTree^{tree}"
-          if ($LASTEXITCODE -ne 0) {
-            throw "Pinned FFmpeg port was not found in vcpkg"
-          }
-
-          New-Item -ItemType Directory -Force -Path $ffmpegOverlay |
-            Out-Null
-
-          $archive = "$env:RUNNER_TEMP\ffmpeg-port.tar"
-
-          git -C $root archive `
-            --format=tar `
-            $ffmpegPortTree `
-            --output="$archive"
-
-          if ($LASTEXITCODE -ne 0) {
-            throw "Could not extract pinned FFmpeg port"
-          }
-
-          tar -xf $archive -C $ffmpegOverlay
-          if ($LASTEXITCODE -ne 0) {
-            throw "Could not unpack FFmpeg port"
-          }
-
-          # Install FFmpeg using the pinned overlay port
-          & "$root\vcpkg.exe" install `
-            "ffmpeg[nvcodec,amf,qsv]:x64-windows" `
-            "--overlay-ports=$overlayRoot"
-
+          & "$root\vcpkg.exe" install "ffmpeg[nvcodec,amf,qsv]:x64-windows"
           if ($LASTEXITCODE -ne 0) {
             throw "FFmpeg installation failed"
           }
 
           $ffmpegDir = "$root\installed\x64-windows"
-
-          # Verify the header that caused the previous failure
-          $requiredHeader = Join-Path `
-            $ffmpegDir "include\libavcodec\avfft.h"
-
-          if (!(Test-Path $requiredHeader)) {
-            throw "FFmpeg avfft.h is missing from the installation"
-          }
 
           "VCPKG_ROOT=$root" |
             Out-File $env:GITHUB_ENV -Append -Encoding utf8
@@ -140,7 +106,12 @@ jobs:
             Out-File $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2.0" --locked
+        shell: pwsh
+        run: |
+          cargo install tauri-cli --version "^2.0" --locked
+          if ($LASTEXITCODE -ne 0) {
+            throw "Tauri CLI installation failed"
+          }
 
       - name: Generate application icons
         shell: pwsh
@@ -152,12 +123,18 @@ jobs:
 
           Copy-Item src-tauri/icons/32x32.png src-tauri/icons/tray.png -Force
 
-      - name: Verify Rust dependency versions
+      - name: Verify FFmpeg Rust dependency
         shell: pwsh
         run: |
-          cargo tree -i ffmpeg-sys-next
+          $tree = cargo tree -i ffmpeg-sys-next
           if ($LASTEXITCODE -ne 0) {
             throw "FFmpeg Rust dependency verification failed"
+          }
+
+          $tree | Write-Host
+
+          if ($tree -notmatch 'ffmpeg-sys-next v9\.') {
+            throw "Expected ffmpeg-sys-next 9.x. Check Cargo.toml."
           }
 
       - name: Build EXE and MSI
