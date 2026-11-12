@@ -5,6 +5,7 @@ use windows::Win32::Media::MediaFoundation::{
     MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID, MF_VERSION,
 };
 use windows::Win32::System::Com::CoTaskMemFree;
+use windows::core::PWSTR;
 
 pub fn enumerate_cameras() -> anyhow::Result<Vec<String>> {
     unsafe {
@@ -38,10 +39,28 @@ unsafe fn enumerate_inner() -> anyhow::Result<Vec<String>> {
         let device_list = std::slice::from_raw_parts(devices, count as usize);
 
         for device in device_list.iter().flatten() {
-            if let Ok(name) =
-                device.GetAllocatedString(&MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME)
+            let mut name = PWSTR(std::ptr::null_mut());
+            let mut length = 0u32;
+
+            if device
+                .GetAllocatedString(
+                    &MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME,
+                    &mut name,
+                    &mut length,
+                )
+                .is_ok()
             {
-                names.push(name.0.to_string_lossy());
+                let friendly_name = name.to_string().unwrap_or_default();
+
+                if !name.0.is_null() {
+                    CoTaskMemFree(Some(
+                        name.0 as *const std::ffi::c_void,
+                    ));
+                }
+
+                if !friendly_name.is_empty() {
+                    names.push(friendly_name);
+                }
             }
         }
 
