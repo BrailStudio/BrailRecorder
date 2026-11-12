@@ -4,7 +4,7 @@ use std::ffi::c_void;
 use windows::Win32::Foundation::{BOOL, LPARAM, RECT};
 use windows::Win32::Graphics::Gdi::{
     EnumDisplayMonitors, EnumDisplaySettingsW, GetMonitorInfoW, DEVMODEW, ENUM_CURRENT_SETTINGS,
-    HDC, HMONITOR, MONITORINFOEXW, MONITORINFOF_PRIMARY,
+    HDC, HMONITOR, MONITORINFOEXW,
 };
 use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
 
@@ -72,7 +72,7 @@ unsafe extern "system" fn monitor_enum_proc(
             friendly_name: friendly_name_for_device(&device_name).unwrap_or(device_name),
             resolution: Resolution::new(width, height),
             refresh_rate_hz,
-            is_primary: (info.monitorInfo.dwFlags & MONITORINFOF_PRIMARY) != 0,
+            is_primary: (info.monitorInfo.dwFlags & 1) != 0,
             dpi_scale_percent,
         });
     }
