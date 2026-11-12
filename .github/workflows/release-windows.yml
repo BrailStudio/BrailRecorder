@@ -126,6 +126,10 @@ jobs:
       - name: Build EXE and MSI
         shell: pwsh
         run: |
+          # Increase Windows executable stack reserve to 16 MiB.
+          # Intended to prevent ffmpeg-sys-next build-script stack overflow.
+          $env:RUSTFLAGS = "-C link-arg=/STACK:16777216"
+
           cargo tauri build --bundles nsis,msi
           if ($LASTEXITCODE -ne 0) {
             throw "Windows installer build failed"
