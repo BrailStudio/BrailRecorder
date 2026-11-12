@@ -174,3 +174,4 @@ let (bgra, width, height) = match &frame.payload {
 };
 
 ScreenshotCapture::write_image(&bgra, width, height, settings, output_path)
+}
