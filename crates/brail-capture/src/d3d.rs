@@ -69,8 +69,9 @@ impl D3dContext {
     /// backend needs to run on.
     pub fn open_shared_texture(&self, shared_handle: HANDLE) -> anyhow::Result<ID3D11Texture2D> {
         unsafe {
-            let texture: ID3D11Texture2D = self.device.OpenSharedResource(shared_handle)?;
-            Ok(texture)
+            let mut texture: Option<ID3D11Texture2D> = None;
+            self.device.OpenSharedResource(shared_handle, &mut texture)?;
+            texture.ok_or_else(|| anyhow::anyhow!("OpenSharedResource returned no texture"))
         }
     }
 }
