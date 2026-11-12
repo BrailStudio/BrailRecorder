@@ -1,4 +1,5 @@
-use windows::Win32::Foundation::HMONITOR;
+use windows::core::Interface;
+use windows::Win32::Graphics::Gdi::HMONITOR;
 use windows::Win32::Graphics::Direct3D11::ID3D11Texture2D;
 use windows::Win32::Graphics::Dxgi::{
     IDXGIAdapter1, IDXGIOutput1, IDXGIOutputDuplication, DXGI_OUTDUPL_FRAME_INFO,
