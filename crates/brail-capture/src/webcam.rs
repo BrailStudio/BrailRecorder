@@ -31,7 +31,7 @@ impl WebcamCapture {
                 &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID,
             )?;
             attributes.SetString(
-                &MF_DEVSOURCE_ATTRIBUTE_VIDCAP_SYMBOLIC_LINK,
+                &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
                 &HSTRING::from(symbolic_link),
             )?;
 
