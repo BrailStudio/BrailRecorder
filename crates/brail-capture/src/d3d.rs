@@ -83,7 +83,7 @@ impl D3dContext {
 pub fn texture_from_surface(
     surface: &windows::Graphics::DirectX::Direct3D11::IDirect3DSurface,
 ) -> anyhow::Result<ID3D11Texture2D> {
-    use windows::Win32::Graphics::Direct3D11::IDirect3DDxgiInterfaceAccess;
+    use windows::Win32::System::WinRT::Direct3D11::IDirect3DDxgiInterfaceAccess;
     unsafe {
         let access: IDirect3DDxgiInterfaceAccess = surface.cast()?;
         let texture: ID3D11Texture2D = access.GetInterface()?;
