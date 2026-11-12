@@ -150,7 +150,6 @@ pub fn capture_monitor_to_file(
         true, // screenshots include the cursor by default, matching the OS Print Screen behavior
         move |frame| {
             let _ = tx.send(frame);
-           },
         },
     )
     .map_err(|e| BrailError::CaptureInitFailed(e.to_string()))?;
