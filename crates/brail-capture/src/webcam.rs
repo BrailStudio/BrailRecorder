@@ -1,11 +1,11 @@
 use windows::core::HSTRING;
 use windows::Win32::Media::MediaFoundation::{
-    IMFActivate, IMFMediaSource, IMFSourceReader, MFCreateAttributes, MFCreateDeviceSource,
+    IMFMediaSource, IMFSourceReader, MFCreateAttributes, MFCreateDeviceSource,
     MFCreateSourceReaderFromMediaSource, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
     MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID,
-    MF_DEVSOURCE_ATTRIBUTE_VIDCAP_SYMBOLIC_LINK, MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+    MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
+    MF_SOURCE_READER_FIRST_VIDEO_STREAM,
 };
-
 use brail_core::frame::{PixelFormat, VideoFrame, VideoFramePayload};
 
 /// Opens a specific webcam (identified by its Media Foundation symbolic
@@ -22,7 +22,10 @@ pub struct WebcamCapture {
 impl WebcamCapture {
     pub fn open(symbolic_link: &str) -> anyhow::Result<Self> {
         unsafe {
-            let attributes = MFCreateAttributes(2)?;
+            let mut attributes: Option<windows::Win32::Media::MediaFoundation::IMFAttributes> = None;
+            MFCreateAttributes(&mut attributes, 2)?;
+            let attributes = attributes
+            .ok_or_else(|| anyhow::anyhow!("Could not create webcam attributes"))?;
             attributes.SetGUID(
                 &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
                 &MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID,
