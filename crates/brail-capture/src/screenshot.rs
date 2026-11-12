@@ -142,16 +142,15 @@ pub fn capture_monitor_to_file(
         D3dContext::new().map_err(|e| BrailError::CaptureInitFailed(e.to_string()))?,
     );
 
-    let (tx, rx) = mpsc::channel::<(Vec<u8>, u32, u32)>();
-    let d3d_for_callback = d3d.clone();
+    let (tx, rx) = mpsc::channel::<brail_core::frame::VideoFrame>();
 
     let session = crate::wgc::WgcSession::start(
         d3d.clone(),
         crate::wgc::CaptureTarget::Monitor(HMONITOR(monitor_handle_id as *mut _)),
         true, // screenshots include the cursor by default, matching the OS Print Screen behavior
         move |frame| {
-            // Only the first frame is needed; later sends fail harmlessly
-            // once the receiver is dropped.
+            let _ = tx.send(frame);
+           },
             if let brail_core::frame::VideoFramePayload::GpuTexture { handle, .. } = &frame.payload {
                 if let Some(texture) = handle.downcast_ref::<ID3D11Texture2D>() {
                     if let Ok(result) =
@@ -171,9 +170,17 @@ pub fn capture_monitor_to_file(
     let received = rx.recv_timeout(std::time::Duration::from_secs(3));
     let _ = session.stop();
 
-    let (bgra, width, height) = received.map_err(|_| {
-        BrailError::CaptureSourceLost
-    })?;
+    let frame = received.map_err(|_| BrailError::CaptureSourceLost)?;
 
-    ScreenshotCapture::write_image(&bgra, width, height, settings, output_path)
-}
+let (bgra, width, height) = match &frame.payload {
+    brail_core::frame::VideoFramePayload::GpuTexture { handle, .. } => {
+        let texture = handle
+            .downcast_ref::<ID3D11Texture2D>()
+            .ok_or_else(|| BrailError::Internal("Invalid screenshot texture".into()))?;
+
+        ScreenshotCapture::read_texture_to_bgra(&d3d, texture)?
+    }
+    _ => return Err(BrailError::CaptureSourceLost),
+};
+
+ScreenshotCapture::write_image(&bgra, width, height, settings, output_path)
