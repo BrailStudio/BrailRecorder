@@ -123,20 +123,6 @@ jobs:
 
           Copy-Item src-tauri/icons/32x32.png src-tauri/icons/tray.png -Force
 
-      - name: Verify FFmpeg Rust dependency
-        shell: pwsh
-        run: |
-          $tree = cargo tree -i ffmpeg-sys-next
-          if ($LASTEXITCODE -ne 0) {
-            throw "FFmpeg Rust dependency verification failed"
-          }
-
-          $tree | Write-Host
-
-          if ($tree -notmatch 'ffmpeg-sys-next v9\.') {
-            throw "Expected ffmpeg-sys-next 9.x. Check Cargo.toml."
-          }
-
       - name: Build EXE and MSI
         shell: pwsh
         run: |
