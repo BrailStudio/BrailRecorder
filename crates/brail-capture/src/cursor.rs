@@ -1,6 +1,6 @@
 use windows::Win32::Foundation::POINT;
 use windows::Win32::Graphics::Direct3D11::ID3D11Texture2D;
-use windows::Win32::Graphics::Gdi::{DeleteDC, DeleteObject, SelectObject};
+use windows::Win32::Graphics::Gdi::{DeleteDC, DeleteObject};
 use windows::Win32::UI::WindowsAndMessaging::{
     DrawIconEx, GetCursorInfo, GetIconInfo, CURSORINFO, CURSOR_SHOWING, DI_NORMAL,
 };
@@ -52,7 +52,6 @@ pub fn composite_cursor_onto_texture(
 
         dxgi_surface.ReleaseDC(None)?;
         let _ = DeleteDC(hdc);
-        let _ = SelectObject; // keep import path documented for future brush-based highlight ring
     }
 
     Ok(())
