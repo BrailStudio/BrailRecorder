@@ -151,15 +151,6 @@ pub fn capture_monitor_to_file(
         move |frame| {
             let _ = tx.send(frame);
            },
-            if let brail_core::frame::VideoFramePayload::GpuTexture { handle, .. } = &frame.payload {
-                if let Some(texture) = handle.downcast_ref::<ID3D11Texture2D>() {
-                    if let Ok(result) =
-                        ScreenshotCapture::read_texture_to_bgra(&d3d_for_callback, texture)
-                    {
-                        let _ = tx.send(result);
-                    }
-                }
-            }
         },
     )
     .map_err(|e| BrailError::CaptureInitFailed(e.to_string()))?;
